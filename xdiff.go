@@ -385,13 +385,24 @@ func Compare(original, edited io.Reader) ([]Delta, error) {
 	if err != nil {
 		return nil, err
 	}
+
+	fmt.Println("Looking at original tree")
+	fmt.Println(oTree)
+
+	fmt.Println("Looking at new tree")
+	fmt.Println(eTree)
+
 	if bytesEqual(oTree.Root.Hash, eTree.Root.Hash) {
 		return nil, nil
 	}
+
+	fmt.Println("Creating minimum matching")
 	minMatch, distTbl, err := MinCostMatching(oTree, eTree)
 	if err != nil {
 		return nil, err
 	}
+
+	fmt.Println("Creating edit script")
 	return EditScript(oTree.Root, eTree.Root, minMatch, distTbl), nil
 }
 
@@ -489,7 +500,12 @@ func MinCostMatching(oTree, eTree *Tree) (MinCostMatch, DistTable, error) {
 	}
 	minMatching.Add(rootPair)
 
-	excludeEqual(rootPair.X, rootPair.Y, 2)
+	excludeEqual(rootPair.X, rootPair.Y, 20000000)
+
+	fmt.Println("Printing original tree after exlcusion")
+	fmt.Println(oTree)
+	fmt.Println("Printing after tree after exlcusion")
+	fmt.Println(eTree)
 
 	// Find all leaf nodes.
 	var n1 []*Node
@@ -505,10 +521,23 @@ func MinCostMatching(oTree, eTree *Tree) (MinCostMatch, DistTable, error) {
 		}
 	})
 
+	fmt.Println("leaf nodes in n1:", len(n1))
+	fmt.Println("leaf nodes in n2:", len(n2))
+
+	fmt.Println("looking inside n1")
+
+	for _, node := range n1 {
+		if node.Signature == "//Actors/Actor/Name/FirstName/text" || node.Signature == "//Actors/Actor/Name/LastName/text" {
+			fmt.Println(string(node.Content))
+		}
+	}
+
+	fmt.Println("Computing distance for all nodes")
 	// Compute distance/cost for all nodes.
 	for len(n1) > 0 && len(n2) > 0 {
 		var parents1 []*Node
 		var parents2 []*Node
+
 		for _, x := range n1 {
 			if x.Parent != nil && !contains(x.Parent, parents1) {
 				parents1 = append(parents1, x.Parent)
@@ -528,6 +557,7 @@ func MinCostMatching(oTree, eTree *Tree) (MinCostMatch, DistTable, error) {
 				}
 			}
 		}
+
 		n1 = parents1
 		n2 = parents2
 	}
@@ -536,15 +566,38 @@ func MinCostMatching(oTree, eTree *Tree) (MinCostMatch, DistTable, error) {
 
 // Exclude subtrees with equal hashes from cost calculation.
 // l is used as slider between performance and quality.
-// Higher number reduces quality and icreases performance.
+// Higher number reduces quality and increases performance.
 func excludeEqual(rootX, rootY *Node, l int) {
 	if l <= 0 {
 		return
 	}
 	for x, refX := rootX.LastChild, rootX.LastChild; x != nil; refX, x = refX.PrevSibling, x.PrevSibling {
 		for y, refY := rootY.LastChild, rootY.LastChild; y != nil; refY, y = refY.PrevSibling, y.PrevSibling {
+			fmt.Println("x", x)
+			fmt.Println("r", refX)
+			//fmt.Println("I am comparing", hex.EncodeToString(x.Hash), "against", hex.EncodeToString(y.Hash))
+			/*
+				if hex.EncodeToString(x.Hash) == "6113563dda063cb57cfdaaf8f0fb7bc54a35f8c5" && hex.EncodeToString(y.Hash) == "6113563dda063cb57cfdaaf8f0fb7bc54a35f8c5" {
+					fmt.Println("we compared the the 611s")
+					if bytesEqual(x.Hash, y.Hash) {
+						fmt.Println("and they were equal")
+					}
+				}
+			*/
+
 			if bytesEqual(x.Hash, y.Hash) {
 				// Remove reference to nodes.
+
+				/*
+					if hex.EncodeToString(x.Hash) == "6113563dda063cb57cfdaaf8f0fb7bc54a35f8c5" && hex.EncodeToString(y.Hash) == "6113563dda063cb57cfdaaf8f0fb7bc54a35f8c5" {
+						fmt.Println("refX.PrevSibling = x.PrevSibling")
+						fmt.Println("refx.PrevSibling:", refX.PrevSibling)
+						fmt.Println("x.PrevSibling:", x.PrevSibling)
+						fmt.Println("x:", x)
+						fmt.Println("refx:", refX)
+					}
+				*/
+
 				refX.PrevSibling = x.PrevSibling
 				if x.Parent != nil && x.Parent.LastChild == x {
 					x.Parent.LastChild = x.PrevSibling

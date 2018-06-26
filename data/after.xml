@@ -5,7 +5,7 @@
       <LastName>Johnson</LastName>
     </Name>
     <Movies>
-      <Title>movie4</Title>
+      <Title>movie1</Title>
       <Title>movie2</Title>
       <Title>movie3</Title>
     </Movies>
@@ -16,7 +16,7 @@
       <LastName>Goodman</LastName>
     </Name>
     <Movies>
-      <Title>movie1</Title>
+      <Title id="2">movie1</Title>
       <Title>movie2</Title>
       <Title>movie3</Title>
     </Movies>

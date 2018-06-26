@@ -16,7 +16,7 @@
       <LastName>Goodman</LastName>
     </Name>
     <Movies>
-      <Title>movie1</Title>
+      <Title id="1">movie1</Title>
       <Title>movie2</Title>
       <Title>movie3</Title>
     </Movies>

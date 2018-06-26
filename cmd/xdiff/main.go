@@ -6,7 +6,7 @@ import (
 	"os"
 	"time"
 
-	"github.com/ajankovic/xdiff"
+	"github.com/tinhajj/xdiff"
 )
 
 func main() {
