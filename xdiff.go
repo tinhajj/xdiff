@@ -500,7 +500,7 @@ func MinCostMatching(oTree, eTree *Tree) (MinCostMatch, DistTable, error) {
 	}
 	minMatching.Add(rootPair)
 
-	excludeEqual(rootPair.X, rootPair.Y, 20000000)
+	myExcludeEqual(rootPair.X, rootPair.Y, 20000000)
 
 	fmt.Println("Printing original tree after exlcusion")
 	fmt.Println(oTree)
