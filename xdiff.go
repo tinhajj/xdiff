@@ -587,17 +587,6 @@ func excludeEqual(rootX, rootY *Node, l int) {
 
 			if bytesEqual(x.Hash, y.Hash) {
 				// Remove reference to nodes.
-
-				/*
-					if hex.EncodeToString(x.Hash) == "6113563dda063cb57cfdaaf8f0fb7bc54a35f8c5" && hex.EncodeToString(y.Hash) == "6113563dda063cb57cfdaaf8f0fb7bc54a35f8c5" {
-						fmt.Println("refX.PrevSibling = x.PrevSibling")
-						fmt.Println("refx.PrevSibling:", refX.PrevSibling)
-						fmt.Println("x.PrevSibling:", x.PrevSibling)
-						fmt.Println("x:", x)
-						fmt.Println("refx:", refX)
-					}
-				*/
-
 				refX.PrevSibling = x.PrevSibling
 				if x.Parent != nil && x.Parent.LastChild == x {
 					x.Parent.LastChild = x.PrevSibling
@@ -606,6 +595,16 @@ func excludeEqual(rootX, rootY *Node, l int) {
 				if y.Parent != nil && y.Parent.LastChild == y {
 					y.Parent.LastChild = y.PrevSibling
 				}
+
+				if hex.EncodeToString(x.Hash) == "6113563dda063cb57cfdaaf8f0fb7bc54a35f8c5" && hex.EncodeToString(y.Hash) == "6113563dda063cb57cfdaaf8f0fb7bc54a35f8c5" {
+					fmt.Println("found 611, and they are equal")
+					fmt.Println("my parent hash is", hex.EncodeToString(x.Parent.Hash))
+					fmt.Println("my parents last child is", hex.EncodeToString(x.Parent.LastChild.Hash))
+					fmt.Println("my parents last child's previous sibling is", hex.EncodeToString(x.Parent.LastChild.PrevSibling.Hash))
+					x.Parent.LastChild.PrevSibling = nil
+					y.Parent.LastChild.PrevSibling = nil
+				}
+
 				break
 			}
 			if rootX.Signature == rootY.Signature {
