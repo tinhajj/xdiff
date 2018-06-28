@@ -211,6 +211,7 @@ func ParseDoc(r io.Reader) (*Tree, error) {
 				attr := &Node{
 					Name:      a.Name.Local,
 					Content:   []byte(a.Value),
+					Parent:    current,
 					Signature: buff.String(),
 				}
 				_, err = io.WriteString(h, attributeType)
@@ -386,12 +387,6 @@ func Compare(original, edited io.Reader) ([]Delta, error) {
 		return nil, err
 	}
 
-	fmt.Println("Looking at original tree")
-	fmt.Println(oTree)
-
-	fmt.Println("Looking at new tree")
-	fmt.Println(eTree)
-
 	if bytesEqual(oTree.Root.Hash, eTree.Root.Hash) {
 		return nil, nil
 	}
@@ -500,12 +495,7 @@ func MinCostMatching(oTree, eTree *Tree) (MinCostMatch, DistTable, error) {
 	}
 	minMatching.Add(rootPair)
 
-	myExcludeEqual(rootPair.X, rootPair.Y, 20000000)
-
-	fmt.Println("Printing original tree after exlcusion")
-	fmt.Println(oTree)
-	fmt.Println("Printing after tree after exlcusion")
-	fmt.Println(eTree)
+	excludeEqual(rootPair.X, rootPair.Y, 3)
 
 	// Find all leaf nodes.
 	var n1 []*Node
@@ -524,15 +514,6 @@ func MinCostMatching(oTree, eTree *Tree) (MinCostMatch, DistTable, error) {
 	fmt.Println("leaf nodes in n1:", len(n1))
 	fmt.Println("leaf nodes in n2:", len(n2))
 
-	fmt.Println("looking inside n1")
-
-	for _, node := range n1 {
-		if node.Signature == "//Actors/Actor/Name/FirstName/text" || node.Signature == "//Actors/Actor/Name/LastName/text" {
-			fmt.Println(string(node.Content))
-		}
-	}
-
-	fmt.Println("Computing distance for all nodes")
 	// Compute distance/cost for all nodes.
 	for len(n1) > 0 && len(n2) > 0 {
 		var parents1 []*Node
@@ -561,55 +542,55 @@ func MinCostMatching(oTree, eTree *Tree) (MinCostMatch, DistTable, error) {
 		n1 = parents1
 		n2 = parents2
 	}
+
 	return minMatching, distTbl, nil
 }
 
+// Remove a node from a tree by dereferencing it.
+func removeNode(node *Node) {
+	// This function can't do anything if given a root
+	if node.Parent == nil {
+		return
+	}
+
+	if node.Parent.LastChild == node {
+		node.Parent.LastChild = node.PrevSibling
+	} else {
+		// this can probably be sped up
+		for x := node.Parent.LastChild; x != nil; x = x.PrevSibling {
+			if x.PrevSibling == node {
+				x.PrevSibling = node.PrevSibling
+				break
+			}
+		}
+	}
+}
+
 // Exclude subtrees with equal hashes from cost calculation.
-// l is used as slider between performance and quality.
-// Higher number reduces quality and increases performance.
+// xdiff algorithm recommends just checking top level trees under root for
+// equality but theres no reason we can't go deeper into sub-trees/levels,
+// this however could make the diff less sensical.
+// l is used as slider between performance and quality. Higher number reduces
+// quality and increases performance.
 func excludeEqual(rootX, rootY *Node, l int) {
 	if l <= 0 {
 		return
 	}
-	for x, refX := rootX.LastChild, rootX.LastChild; x != nil; refX, x = refX.PrevSibling, x.PrevSibling {
-		for y, refY := rootY.LastChild, rootY.LastChild; y != nil; refY, y = refY.PrevSibling, y.PrevSibling {
-			fmt.Println("x", x)
-			fmt.Println("r", refX)
-			//fmt.Println("I am comparing", hex.EncodeToString(x.Hash), "against", hex.EncodeToString(y.Hash))
-			/*
-				if hex.EncodeToString(x.Hash) == "6113563dda063cb57cfdaaf8f0fb7bc54a35f8c5" && hex.EncodeToString(y.Hash) == "6113563dda063cb57cfdaaf8f0fb7bc54a35f8c5" {
-					fmt.Println("we compared the the 611s")
-					if bytesEqual(x.Hash, y.Hash) {
-						fmt.Println("and they were equal")
-					}
-				}
-			*/
+	var x, y *Node
 
+	for x = rootX.LastChild; x != nil; x = x.PrevSibling {
+		for y = rootY.LastChild; y != nil; y = y.PrevSibling {
 			if bytesEqual(x.Hash, y.Hash) {
-				// Remove reference to nodes.
-				refX.PrevSibling = x.PrevSibling
-				if x.Parent != nil && x.Parent.LastChild == x {
-					x.Parent.LastChild = x.PrevSibling
-				}
-				refY.PrevSibling = y.PrevSibling
-				if y.Parent != nil && y.Parent.LastChild == y {
-					y.Parent.LastChild = y.PrevSibling
-				}
-
-				if hex.EncodeToString(x.Hash) == "6113563dda063cb57cfdaaf8f0fb7bc54a35f8c5" && hex.EncodeToString(y.Hash) == "6113563dda063cb57cfdaaf8f0fb7bc54a35f8c5" {
-					fmt.Println("found 611, and they are equal")
-					fmt.Println("my parent hash is", hex.EncodeToString(x.Parent.Hash))
-					fmt.Println("my parents last child is", hex.EncodeToString(x.Parent.LastChild.Hash))
-					fmt.Println("my parents last child's previous sibling is", hex.EncodeToString(x.Parent.LastChild.PrevSibling.Hash))
-					x.Parent.LastChild.PrevSibling = nil
-					y.Parent.LastChild.PrevSibling = nil
-				}
+				removeNode(x)
+				removeNode(y)
 
 				break
 			}
 			if rootX.Signature == rootY.Signature {
 				l--
-				excludeEqual(x, y, l)
+				if x.LastChild != nil && y.LastChild != nil {
+					excludeEqual(x, y, l)
+				}
 			}
 		}
 	}
@@ -723,6 +704,7 @@ func EditScript(oRoot, eRoot *Node, minCostM MinCostMatch, distTbl DistTable) []
 	if distTbl[rootPair] == 0 {
 		return nil
 	}
+
 	var script []Delta
 	for x := oRoot.LastChild; x != nil; x = x.PrevSibling {
 		for y := eRoot.LastChild; y != nil; y = y.PrevSibling {
