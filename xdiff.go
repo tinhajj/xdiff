@@ -373,6 +373,32 @@ func parentSig(sig string) string {
 	return sig
 }
 
+func check(node *Node) {
+	checkRec(node, nil)
+}
+
+func checkRec(node, parent *Node) {
+	if parent == nil {
+		// at root
+		if node.LastChild != nil {
+			checkRec(node.LastChild, node)
+		}
+
+		return
+	}
+
+	if node.LastChild != nil {
+		checkRec(node.LastChild, node)
+	}
+
+	for n := node.PrevSibling; n != nil; n = n.PrevSibling {
+		if n.Parent != parent {
+			fmt.Println("something is wrong with the tree")
+			fmt.Println("looking at", n, "was expecting", parent, "but got", n.Parent)
+		}
+	}
+}
+
 // Compare runs X-Diff comparing algorithm on the provided arguments.
 // Original reader is compared to edited and slice of deltas is
 // returned.
@@ -386,6 +412,9 @@ func Compare(original, edited io.Reader) ([]Delta, error) {
 	if err != nil {
 		return nil, err
 	}
+
+	check(oTree.Root)
+	return nil, nil
 
 	if bytesEqual(oTree.Root.Hash, eTree.Root.Hash) {
 		return nil, nil
@@ -495,13 +524,7 @@ func MinCostMatching(oTree, eTree *Tree) (MinCostMatch, DistTable, error) {
 	}
 	minMatching.Add(rootPair)
 
-	fmt.Println("Original tree")
-	fmt.Println(oTree)
-
-	fmt.Println("New tree")
-	fmt.Println(eTree)
-
-	excludeEqual(rootPair.X, rootPair.Y, 3)
+	//excludeEqual(rootPair.X, rootPair.Y, 3)
 
 	// Find all leaf nodes.
 	var n1 []*Node
