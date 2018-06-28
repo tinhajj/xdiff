@@ -495,13 +495,15 @@ func MinCostMatching(oTree, eTree *Tree) (MinCostMatch, DistTable, error) {
 	}
 	minMatching.Add(rootPair)
 
-	fmt.Println("Original tree")
-	fmt.Println(oTree)
+	/*
+		fmt.Println("Original tree")
+		fmt.Println(oTree)
 
-	fmt.Println("New tree")
-	fmt.Println(eTree)
+		fmt.Println("New tree")
+		fmt.Println(eTree)
+	*/
 
-	excludeEqual(rootPair.X, rootPair.Y, 3)
+	excludeEqual(rootPair.X, rootPair.Y, 300000)
 
 	// Find all leaf nodes.
 	var n1 []*Node
@@ -553,7 +555,7 @@ func MinCostMatching(oTree, eTree *Tree) (MinCostMatch, DistTable, error) {
 }
 
 // Remove a node from a tree by dereferencing it.
-func removeNode(node *Node) {
+func removeNode(node *Node, nodePredecessor *Node) {
 	// This function can't do anything if given a root
 	if node.Parent == nil {
 		return
@@ -562,13 +564,7 @@ func removeNode(node *Node) {
 	if node.Parent.LastChild == node {
 		node.Parent.LastChild = node.PrevSibling
 	} else {
-		// this can probably be sped up
-		for x := node.Parent.LastChild; x != nil; x = x.PrevSibling {
-			if x.PrevSibling == node {
-				x.PrevSibling = node.PrevSibling
-				break
-			}
-		}
+		nodePredecessor.PrevSibling = node.PrevSibling
 	}
 }
 
@@ -583,12 +579,18 @@ func excludeEqual(rootX, rootY *Node, l int) {
 		return
 	}
 	var x, y *Node
+	var lastX, lastY *Node
+	lastX, lastY = nil, nil
+	var removal bool
 
 	for x = rootX.LastChild; x != nil; x = x.PrevSibling {
+		lastY = nil
 		for y = rootY.LastChild; y != nil; y = y.PrevSibling {
 			if bytesEqual(x.Hash, y.Hash) {
-				removeNode(x)
-				removeNode(y)
+				removeNode(x, lastX)
+				removeNode(y, lastY)
+
+				removal = true
 
 				break
 			}
@@ -598,6 +600,13 @@ func excludeEqual(rootX, rootY *Node, l int) {
 					excludeEqual(x, y, l)
 				}
 			}
+			lastY = y
+		}
+
+		if removal {
+			removal = false
+		} else {
+			lastX = x
 		}
 	}
 }
