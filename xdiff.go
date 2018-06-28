@@ -495,6 +495,12 @@ func MinCostMatching(oTree, eTree *Tree) (MinCostMatch, DistTable, error) {
 	}
 	minMatching.Add(rootPair)
 
+	fmt.Println("Original tree")
+	fmt.Println(oTree)
+
+	fmt.Println("New tree")
+	fmt.Println(eTree)
+
 	excludeEqual(rootPair.X, rootPair.Y, 3)
 
 	// Find all leaf nodes.
