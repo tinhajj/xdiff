@@ -389,20 +389,27 @@ func Compare(original, edited io.Reader) ([]Delta, error) {
 	}
 	fmt.Println("Finished parsing new tree")
 
+	fmt.Println("Checking old tree")
 	oTree.check()
-	fmt.Println(oTree)
 
-	return nil, nil
+	fmt.Println("Checking new tree")
+	eTree.check()
 
 	if bytesEqual(oTree.Root.Hash, eTree.Root.Hash) {
 		return nil, nil
 	}
 
-	fmt.Println("Creating minimum matching")
+	fmt.Println("Creating distance table & minimum matching")
 	minMatch, distTbl, err := MinCostMatching(oTree, eTree)
 	if err != nil {
 		return nil, err
 	}
+
+	fmt.Println("Checking old tree")
+	oTree.check()
+
+	fmt.Println("Checking new tree")
+	eTree.check()
 
 	fmt.Println("Creating edit script")
 	return EditScript(oTree.Root, eTree.Root, minMatch, distTbl), nil
@@ -502,7 +509,7 @@ func MinCostMatching(oTree, eTree *Tree) (MinCostMatch, DistTable, error) {
 	}
 	minMatching.Add(rootPair)
 
-	//excludeEqual(rootPair.X, rootPair.Y, 3)
+	excludeEqual(rootPair.X, rootPair.Y, 3)
 
 	// Find all leaf nodes.
 	var n1 []*Node
