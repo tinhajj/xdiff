@@ -211,7 +211,7 @@ func ParseDoc(r io.Reader) (*Tree, error) {
 				attr := &Node{
 					Name:      a.Name.Local,
 					Content:   []byte(a.Value),
-					Parent:    current,
+					Parent:    child,
 					Signature: buff.String(),
 				}
 				_, err = io.WriteString(h, attributeType)
@@ -373,32 +373,6 @@ func parentSig(sig string) string {
 	return sig
 }
 
-func check(node *Node) {
-	checkRec(node, nil)
-}
-
-func checkRec(node, parent *Node) {
-	if parent == nil {
-		// at root
-		if node.LastChild != nil {
-			checkRec(node.LastChild, node)
-		}
-
-		return
-	}
-
-	if node.LastChild != nil {
-		checkRec(node.LastChild, node)
-	}
-
-	for n := node.PrevSibling; n != nil; n = n.PrevSibling {
-		if n.Parent != parent {
-			fmt.Println("something is wrong with the tree")
-			fmt.Println("looking at", n, "was expecting", parent, "but got", n.Parent)
-		}
-	}
-}
-
 // Compare runs X-Diff comparing algorithm on the provided arguments.
 // Original reader is compared to edited and slice of deltas is
 // returned.
@@ -408,12 +382,16 @@ func Compare(original, edited io.Reader) ([]Delta, error) {
 	if err != nil {
 		return nil, err
 	}
+	fmt.Println("Finished parsing old tree")
 	eTree, err := ParseDoc(edited)
 	if err != nil {
 		return nil, err
 	}
+	fmt.Println("Finished parsing new tree")
 
-	check(oTree.Root)
+	oTree.check()
+	fmt.Println(oTree)
+
 	return nil, nil
 
 	if bytesEqual(oTree.Root.Hash, eTree.Root.Hash) {
