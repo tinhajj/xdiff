@@ -528,20 +528,6 @@ func MinCostMatching(oTree, eTree *Tree) (MinCostMatch, DistTable, error) {
 	fmt.Println("leaf nodes in n1:", len(n1))
 	fmt.Println("leaf nodes in n2:", len(n2))
 
-	fmt.Println("n1")
-
-	fmt.Println(n1[0])
-	fmt.Println(n1[0].Parent)
-	fmt.Println(n1[0].Parent.Parent)
-	fmt.Println(n1[0].Parent.Parent.Parent)
-
-	fmt.Println("n2")
-
-	fmt.Println(n2[0])
-	fmt.Println(n2[0].Parent)
-	fmt.Println(n2[0].Parent.Parent)
-	fmt.Println(n2[0].Parent.Parent.Parent)
-
 	// Compute distance/cost for all nodes.
 	for len(n1) > 0 && len(n2) > 0 {
 		var parents1 []*Node

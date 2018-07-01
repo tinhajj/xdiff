@@ -27,3 +27,20 @@ func checkRec(node, parent *Node) {
 		}
 	}
 }
+
+func computeDistance(distTbl *DistTable, minMatching *MinCostMatch, root1 *Node, root2 *Node) {
+	child1 := root1.LastChild
+	child2 := root2.LastChild
+
+	for x := child1; x != nil; child1.PrevSibling {
+		for y := child2; y != nil; child2.PrevSibling {
+			if x.Signature == y.Signature {
+				fmt.Println("we found a match")
+				if bytesEqual(x.Hash, y.Hash) {
+					fmt.Println("we found a perfect match")
+					continue
+				}
+			}
+		}
+	}
+}
