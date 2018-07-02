@@ -29,7 +29,7 @@ func checkRec(node, parent *Node) {
 }
 
 func computeDist2(distTbl *DistTable, minMatching *MinCostMatch, root1 *Node, root2 *Node) {
-	for child1, child2 := root1.LastChild, root2.LastChild; child1.LastChild != nil && child2.LastChild != nil; child1, child2 = child1.LastChild, child2.LastChild {
+	for child1, child2 := root1.LastChild, root2.LastChild; child1 != nil && child2 != nil; child1, child2 = child1.LastChild, child2.LastChild {
 		for x := child1; x != nil; x = child1.PrevSibling {
 			for y := child2; y != nil; y = child2.PrevSibling {
 				if x.Signature == y.Signature {
